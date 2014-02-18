@@ -39,7 +39,7 @@ void node::addNext( std::shared_ptr<node> next )
 {
     for(auto e: edges)
     {
-        if( next->word == e->next->word )
+        if( next->word == e->next.lock()->word )
         {
             ++e->count;
             return;

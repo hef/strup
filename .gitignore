@@ -2,3 +2,5 @@
 .sconsign.dblite
 *.dSYM
 *.pyc
+main
+*.o

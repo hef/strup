@@ -1,6 +1,6 @@
 #include "edge.h"
 
-edge::edge(std::shared_ptr<node> next)
+edge::edge(std::weak_ptr<node> next)
 : next(next)
 , count(1)
 {
@@ -9,6 +9,6 @@ edge::edge(std::shared_ptr<node> next)
 
 std::shared_ptr<node> edge::getNext()
 {
-    return next;
+    return next.lock();
 }
 
