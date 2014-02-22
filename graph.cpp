@@ -44,7 +44,7 @@ void graph::addEndWord(std::string word)
 }
 
 
-std::string graph::getSentence()
+std::string graph::getSentence() const
 {
     std::shared_ptr<node> start;
     for(auto n: nodes)
