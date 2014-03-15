@@ -1,5 +1,6 @@
 #include "slist.h"
 #include <assert.h>
+#include <future>
 
 
 template <typename T>
@@ -13,6 +14,7 @@ struct node
 int main(int, char* [])
 {
     slist<node<int>> nodes;
+    nodes.head = nullptr;
     node<int>* pNode = nullptr;
     pNode = nodes.pop();
     assert( nullptr == pNode);
@@ -30,6 +32,15 @@ int main(int, char* [])
     delete pNode;
     pNode = nodes.pop();
     assert(nullptr == pNode );
+
+    std::async([&]{
+        std::chrono::seconds duration(3);
+        std::this_thread::sleep_for(duration);
+        nodes.push(new node<int>(8));
+    });
+
+    pNode = nodes.waitPop();
+    assert( 8 == pNode->data );
 
     return 0;
 }
