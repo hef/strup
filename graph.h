@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <memory>
 class node;
 class graph
 {

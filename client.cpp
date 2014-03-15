@@ -150,7 +150,6 @@ void client::writeLoop()
             assert( c->message.length() == length );
             length = ::send(socketfd, "\r\n", 2, 0);
             assert( 2 == length );
-            delete c;
         }
     }
 }
