@@ -7,6 +7,7 @@
 template <typename T>
 class slist {
 public:
+    slist();
     void push(T*);
     T* pop();
     T* waitPop();
@@ -16,6 +17,12 @@ public:
     std::mutex m;
     std::condition_variable cv;
 };
+
+template <typename T>
+slist<T>::slist()
+: head(nullptr)
+{
+}
 
 template <typename T>
 void slist<T>::push(T* n)

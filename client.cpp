@@ -14,9 +14,18 @@ client::client()
 {
     handlers.push_back(onAllDebug);
     handlers.push_back(onPing);
+    handlers.push_back(onEndMotd);
     connect();
 //    send("NICK mark_3519");
 //    send("user mark pumpingstationone.org chat.freenode.net :mark");
+
+    std::string a("NICK mark_3519\r\n");
+    std::string b("user mark pumpingstationone.org chat.freenode.net :mark\r\n");
+    int length = ::send(socketfd, a.c_str(), a.length(), 0);
+    assert( a.length() == length );
+    length = ::send(socketfd, b.c_str(), b.length(), 0);
+    assert( b.length() == length );
+
 }
 
 client::~client()
@@ -31,24 +40,21 @@ void client::connect()
 
     memset(&hints, 0, sizeof(hints));
 
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
     int res = getaddrinfo(
-            "irc.freenode.net",
-//            "acm.cs.uic.edu",
+            "chat.freenode.net",
             "6667",
             &hints,
             &serverinfo);
     (void)res;
     assert(res == 0);
-    std::cout << "gotaddr" << std::endl;
 
     (void)socketfd;
 
     for(addrinfo* p = serverinfo; p != NULL; p = p->ai_next)
     {
-        std::cout << "trying" << std::endl;
         socketfd = socket(
                 p->ai_family,
                 p->ai_socktype,
@@ -59,10 +65,7 @@ void client::connect()
             continue;
         }
 
-        std::cout << "connecting" << std::endl;
         res = ::connect(socketfd, p->ai_addr, p->ai_addrlen);
-        //res = ::connect(socketfd, serverinfo->ai_addr, serverinfo->ai_addrlen);
-        std::cout << "connected" << std::endl;
         if(res == -1)
         {
             std::cerr << "Failed to connect" << std::endl;
@@ -73,7 +76,6 @@ void client::connect()
     }
     assert(res == 0);
     freeaddrinfo(serverinfo);
-    std::cout << "done connecting" << std::endl;
 }
 
 void client::readLoop()
@@ -156,9 +158,13 @@ void client::writeLoop()
 
 void client::send(std::string message)
 {
-    std::cout << "pushing" << message << std::endl;
     command* c = new command(message);
     commands.push(c);
+}
+
+void client::onAllDebug(client&, std::string message)
+{
+    std::cout << "recv: " << message << std::endl;
 }
 
 void client::onPing(client& c, std::string message)
@@ -173,26 +179,28 @@ void client::onPing(client& c, std::string message)
         pong += match[1];
         c.send(pong);
     }
-
 }
 
-void client::onAllDebug(client&, std::string message)
+void client::onEndMotd(client& c, std::string message)
 {
-    std::cout << "recv: " << message << std::endl;
+
+    (void)c;
+    (void)message;
+    std::regex expression(R"(\S+ 376 .*)");
+    if(std::regex_match(message, expression))
+    {
+        c.send_thread = std::thread(&client::writeLoop, &c);
+    }
 }
+
 
 int main( int argc, char* argv[] )
 {
     (void)argc;
     (void)argv;
     client c;
-    std::thread send_thread(&client::writeLoop, &c);
     std::thread recv_thread(&client::readLoop, &c);
-    std::chrono::milliseconds duration( 2000 );
-    std::this_thread::sleep_for(duration);
-    std::cout << "signing on" << std::endl;
-    c.send("NICK mark_3519");
-    c.send("user mark pumpingstationone.org chat.freenode.net :mark");
+    c.send("JOIN #pumpingstationone");
     std::chrono::milliseconds duration2( 30000 );
     std::this_thread::sleep_for(duration2);
     return 0;

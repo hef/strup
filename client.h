@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <string>
+#include <thread>
 class client
 {
 public:
@@ -11,13 +12,15 @@ public:
     ~client();
 private:
     void connect();
+    void writeLoop();
+    std::thread send_thread;
 public:
     void readLoop();
-    void writeLoop();
     void send(std::string message);
 private:
-    static void onPing(client&, std::string);
     static void onAllDebug(client&, std::string);
+    static void onEndMotd(client&, std::string);
+    static void onPing(client&, std::string);
 
     struct command
     {
