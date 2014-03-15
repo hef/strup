@@ -34,7 +34,7 @@ int main(int, char* [])
     assert(nullptr == pNode );
 
     std::async([&]{
-        std::chrono::seconds duration(3);
+        std::chrono::seconds duration(1);
         std::this_thread::sleep_for(duration);
         nodes.push(new node<int>(8));
     });
