@@ -12,11 +12,12 @@ public:
 private:
     void connect();
 public:
-    void loop();
+    void readLoop();
+    void writeLoop();
     void send(std::string message);
 private:
-    static void onPing(const client&, std::string);
-    static void onAllDebug(const client&, std::string);
+    static void onPing(client&, std::string);
+    static void onAllDebug(client&, std::string);
 
     struct command
     {
@@ -27,7 +28,7 @@ private:
     
     slist<command> commands;
     int socketfd;
-    std::vector<std::function<void(const client&,  std::string)>> handlers;
+    std::vector<std::function<void(client&,  std::string)>> handlers;
     std::string server_message;
 };
 #endif // ifndef CLIENT_H
