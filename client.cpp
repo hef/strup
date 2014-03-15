@@ -16,10 +16,8 @@ client::client()
     handlers.push_back(onPing);
     handlers.push_back(onEndMotd);
     connect();
-//    send("NICK mark_3519");
-//    send("user mark pumpingstationone.org chat.freenode.net :mark");
 
-    std::string a("NICK mark_3519\r\n");
+    std::string a("NICK strup\r\n");
     std::string b("user mark pumpingstationone.org chat.freenode.net :mark\r\n");
     int length = ::send(socketfd, a.c_str(), a.length(), 0);
     assert( a.length() == length );
