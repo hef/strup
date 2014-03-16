@@ -5,6 +5,32 @@
 #include <assert.h>
 #include <memory>
 #include "graph.h"
+#include "client.h"
+#include <regex>
+
+
+class alice
+{
+const graph& g;
+    public:
+    alice(const graph& g) : g(g)
+    {
+    }
+
+    void operator()(client& c, std::string message)
+    {
+        std::smatch match;
+        std::regex expression("^:(\\S+) PRIVMSG (\\S+)+ :!alice$");
+        std::regex_search(message, match, expression);
+
+        if(match.size())
+        {
+            std::string sender = match[2];
+            std::string message = g.getSentence();
+            c.send("PRIVMSG " + sender + " :" + message);
+        }
+    }
+};
 
 
 int main(int argc, char* argv[])
@@ -69,5 +95,15 @@ int main(int argc, char* argv[])
     file.close();
 
     std::cout << g.getSentence() << std::endl;
+    
+    client irc;
+    
+    irc.send("JOIN :#pumpingstationone");
+    alice a(g);
+    irc.registerHandler(a);
+    std::chrono::hours duration( 1 );
+    std::this_thread::sleep_for(duration);
+    irc.quit();
+
     return 0;
 }

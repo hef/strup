@@ -3,5 +3,6 @@
 *.dSYM
 *.pyc
 *.o
+*.a
 sentence
 client

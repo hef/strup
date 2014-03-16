@@ -11,24 +11,26 @@
 
 client::client()
 : socketfd(-1)
+, bShouldSendCommands(true)
 {
     handlers.push_back(onAllDebug);
     handlers.push_back(onPing);
     handlers.push_back(onEndMotd);
     connect();
 
-    std::string a("NICK strup\r\n");
-    std::string b("user mark pumpingstationone.org chat.freenode.net :mark\r\n");
+    recvThread = std::thread(&client::readLoop, this);
+
+    std::string a;
+    a += ("NICK strup\r\n");
+    a += ("user mark pumpingstationone.org chat.freenode.net :mark\r\n");
     int length = ::send(socketfd, a.c_str(), a.length(), 0);
     assert( a.length() == length );
-    length = ::send(socketfd, b.c_str(), b.length(), 0);
-    assert( b.length() == length );
-
 }
 
 client::~client()
 {
-    close(socketfd);
+    sendThread.join();
+    recvThread.join();
 }
 
 void client::connect()
@@ -59,14 +61,14 @@ void client::connect()
                 p->ai_protocol);
         if( socketfd == -1)
         {
-            std::cerr << "Failed to build socketfd" << std::endl;
+            std::cout << "Failed to build socketfd" << std::endl;
             continue;
         }
 
         res = ::connect(socketfd, p->ai_addr, p->ai_addrlen);
         if(res == -1)
         {
-            std::cerr << "Failed to connect" << std::endl;
+            std::cout << "Failed to connect" << std::endl;
             close(socketfd);
             continue;
         }
@@ -78,18 +80,25 @@ void client::connect()
 
 void client::readLoop()
 {
-    struct timeval timeout;
-    timeout.tv_sec = 30;
-    timeout.tv_usec = 0;
+    //struct timeval timeout;
+    //timeout.tv_sec = 30;
+    //timeout.tv_usec = 0;
 
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(socketfd, &readfds);
 
     bool running = true;
+    int result = -1;
     while( running )
     {
-        select(socketfd+1, &readfds, nullptr, nullptr, &timeout);
+        result = select(socketfd+1, &readfds, nullptr, nullptr, nullptr);
+        if( result == -1 )
+        {
+            std::cout << "selecterr: " <<  strerror(errno) << std::endl;
+            running = false;
+            break;
+        }
         
         char buffer[2];
         buffer[1] = '\0';
@@ -97,6 +106,14 @@ void client::readLoop()
 
         if(res == -1)
         {
+            std::cout << "recverr: " <<  strerror(errno) << std::endl;
+            running = false;
+            break;
+        }
+
+        if(res == 0)
+        {
+            std::cout << "recv: socket closed" << std::endl;
             running = false;
             break;
         }
@@ -138,26 +155,50 @@ void client::readLoop()
     }
 }
 
-void client::writeLoop()
+void client::sendRaw(std::string message)
 {
-    while(true)
+    std::cout << "send: " << message << std::endl;
+    message += "\r\n";
+    int sent = 0;
+    int result = -1;
+    do {
+        result = ::send(socketfd, message.c_str() + sent, message.length() - sent, 0);
+        sent += result;
+    } while( sent < (int)message.length() && result != -1);
+
+    if(result == -1)
+    {
+        std::cout << "senderr: " <<  strerror(errno) << std::endl;
+    }
+}
+
+void client::commandLoop()
+{
+    while(bShouldSendCommands)
     {
         command* c = commands.waitPop();
         if(c)
         {
-            std::cout << "send: " << c->message << std::endl;
-            int length = ::send(socketfd, c->message.c_str(), c->message.length(), 0);
-            assert( c->message.length() == length );
-            length = ::send(socketfd, "\r\n", 2, 0);
-            assert( 2 == length );
+            c->operator()(*this);
         }
     }
 }
 
 void client::send(std::string message)
 {
-    command* c = new command(message);
+    command* c = new rawMessage(message);
     commands.push(c);
+}
+
+void client::quit(std::string quitMessage)
+{
+    command* c = new quitCommand(quitMessage);
+    commands.push(c);
+}
+
+void client::registerHandler( std::function<void(client&, std::string)> handler )
+{
+    handlers.push_back(handler);
 }
 
 void client::onAllDebug(client&, std::string message)
@@ -181,25 +222,39 @@ void client::onPing(client& c, std::string message)
 
 void client::onEndMotd(client& c, std::string message)
 {
-
-    (void)c;
-    (void)message;
     std::regex expression(R"(\S+ 376 .*)");
     if(std::regex_match(message, expression))
     {
-        c.send_thread = std::thread(&client::writeLoop, &c);
+        c.sendThread = std::thread(&client::commandLoop, &c);
     }
+    // todo unregister
 }
 
+void client::rawMessage::operator()(client& c)
+{
+    c.sendRaw(message);
+}
 
-int main( int argc, char* argv[] )
+void client::quitCommand::operator()(client& c)
+{
+    quitMessage = "QUIT :" + quitMessage;
+    c.bShouldSendCommands = false;
+    c.sendRaw(quitMessage);
+    close(c.socketfd);
+}
+
+int not_main( int argc, char* argv[] )
 {
     (void)argc;
     (void)argv;
     client c;
-    std::thread recv_thread(&client::readLoop, &c);
     c.send("JOIN #pumpingstationone");
-    std::chrono::milliseconds duration2( 30000 );
+    std::chrono::milliseconds duration( 30000 );
+    std::chrono::milliseconds duration2( 100 );
+    std::this_thread::sleep_for(duration);
+    //c.send("QUIT :Farwell, cruel world");
+    c.quit();
     std::this_thread::sleep_for(duration2);
+    std::cout << "leaving main" << std::endl;
     return 0;
 }
