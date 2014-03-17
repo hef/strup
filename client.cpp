@@ -29,6 +29,7 @@ client::client()
 
 client::~client()
 {
+    quit();
     sendThread.join();
     recvThread.join();
 }

@@ -102,6 +102,7 @@ int main(int argc, char* argv[])
     alice a(g);
     irc.registerHandler(a);
     std::chrono::hours duration( 1 );
+    //std::chrono::seconds duration( 30 );
     std::this_thread::sleep_for(duration);
     irc.quit();
 
