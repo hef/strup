@@ -1,11 +1,2 @@
-*.txt
-.sconsign.dblite
-*.dSYM
+build
 *.pyc
-*.o
-*.a
-sentence
-client
-slist
-x
-main
