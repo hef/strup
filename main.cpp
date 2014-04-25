@@ -41,7 +41,6 @@ int main(int argc, char* argv[])
     graph g;
 
     std::ifstream file;
-    //file.open("input.txt", std::ios::in);
     file.open("pg11.txt", std::ios::in);
     assert(file.is_open());
     
