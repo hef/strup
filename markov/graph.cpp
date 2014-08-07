@@ -1,10 +1,11 @@
 #include "graph.h"
 #include "node.h"
+#include <algorithm>
 
 void graph::addWordPair(std::string first, std::string second)
 {
-    std::shared_ptr<node> firstNode;
-    std::shared_ptr<node> secondNode;
+    node* firstNode = nullptr;
+    node* secondNode = nullptr;
 
     for( auto n: nodes )
     {
@@ -17,16 +18,26 @@ void graph::addWordPair(std::string first, std::string second)
             secondNode = n;
         }
     }
+    
+    /*auto comparitor = [](node* a, node* b){ return a->word < b->word;  };
+    
+    std::sort(nodes.begin(), nodes.end(), comparitor);
+    
+    auto finder = [](node* element, std::string value){ return element->word < value;};
+    auto x = std::lower_bound(nodes.begin(), nodes.end(), first, finder);
+    firstNode = *x;
+    secondNode = *std::lower_bound(nodes.begin(), nodes.end(), second, finder);*/
+
 
     if(!firstNode)
     {
-        firstNode = std::make_shared<node>(first);
+        firstNode = new node(first);
         nodes.push_back(firstNode);
     }
 
     if(!secondNode)
     {
-        secondNode = std::make_shared<node>(second);
+        secondNode = new node(second);
         nodes.push_back(secondNode);
     }
     firstNode->addNext(secondNode);
@@ -46,7 +57,7 @@ void graph::addEndWord(std::string word)
 
 std::string graph::getSentence() const
 {
-    std::shared_ptr<node> start;
+    node* start;
     for(auto n: nodes)
     {
         if(n->word == "")

@@ -4,7 +4,7 @@
 class node;
 class graph
 {
-    std::vector< std::shared_ptr<node> > nodes;
+    std::vector< node* > nodes;
 public:
     void addWordPair(std::string first, std::string second);
     void addStartWord(std::string word);

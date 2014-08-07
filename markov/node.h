@@ -9,12 +9,12 @@ class edge;
 class node {
     friend class graph;
     std::string word;
-    std::vector< std::shared_ptr<edge> > edges;
+    std::vector< edge* > edges;
     int getTotal() const;
-    std::shared_ptr<edge> pick(int index);
+    edge* pick(int index);
 public:
     node( std::string word );
-    void addNext( std::shared_ptr<node> next);
-    std::shared_ptr<node> getNext();
+    void addNext( node* next);
+    node* getNext();
 };
 #endif // #ifndef node_h

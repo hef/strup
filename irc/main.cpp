@@ -9,6 +9,8 @@
 #include <regex>
 
 
+void grab( graph& g, std::string filename );
+
 class alice
 {
 const graph& g;
@@ -40,8 +42,27 @@ int main(int argc, char* argv[])
 
     graph g;
 
+    grab( g, "/Users/hef/projects/strup/data/pg11.txt" );
+    //grab( g, "/Users/hef/projects/strup/data/pg1727.txt" );
+    //grab( g, "/Users/hef/projects/strup/data/pg2591.txt" );
+    //grab( g, "/Users/hef/projects/strup/data/pg3061.txt" );
+
+    client irc;
+    irc.send("JOIN :#pumpingstationone");
+    alice a(g);
+    irc.registerHandler(a);
+    std::chrono::hours duration( 1 );
+    //std::chrono::seconds duration( 15 );
+    std::this_thread::sleep_for(duration);
+    irc.quit();
+
+    return 0;
+}
+
+void grab( graph& g, std::string filename )
+{
     std::ifstream file;
-    file.open("pg11.txt", std::ios::in);
+    file.open( filename, std::ios::in);
     assert(file.is_open());
     
     char ch;
@@ -92,18 +113,5 @@ int main(int argc, char* argv[])
         }    
     }
     file.close();
-
     std::cout << g.getSentence() << std::endl;
-    
-    client irc;
-    
-    irc.send("JOIN :#pumpingstationone");
-    alice a(g);
-    irc.registerHandler(a);
-    std::chrono::hours duration( 1 );
-    //std::chrono::seconds duration( 30 );
-    std::this_thread::sleep_for(duration);
-    irc.quit();
-
-    return 0;
 }

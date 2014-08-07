@@ -19,7 +19,7 @@ int node::getTotal() const
     return total;
 }
 
-std::shared_ptr<edge> node::pick(int index)
+edge* node::pick(int index)
 {
     assert( index >= 0 && "Pick index too small.");
     assert( index < getTotal() && "Pick index too big.");
@@ -35,21 +35,21 @@ std::shared_ptr<edge> node::pick(int index)
     return nullptr;
 }
 
-void node::addNext( std::shared_ptr<node> next )
+void node::addNext( node* next )
 {
     for(auto e: edges)
     {
-        if( next->word == e->next.lock()->word )
+        if( next->word == e->next->word )
         {
             ++e->count;
             return;
         }
     }
-    edges.push_back( std::make_shared<edge>(next) );
+    edges.push_back( new edge(next) );
 }
 
 std::random_device generator;
-std::shared_ptr<node> node::getNext()
+node* node::getNext()
 {
     if(edges.size())
     {
